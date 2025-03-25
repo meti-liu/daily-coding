@@ -1,0 +1,72 @@
+module scpu_top(
+    input clk,                      // 系统时钟
+    input rstn,                     // 复位信号
+    input [15:0] sw_i,              // 输入开关
+    output [7:0] disp_an_o,         // 数码管片选输出
+    output [7:0] disp_seg_o         // 数码管段选输出
+);
+
+    // 时钟分频器
+    reg [31:0] clkdiv;
+    wire CLK_CPU;
+
+    always @(posedge clk or negedge rstn) begin
+        if (!rstn)
+            clkdiv <= 0;
+        else
+            clkdiv <= clkdiv + 1'b1;
+    end
+
+    // 根据开关 `sw_i[15]` 选择时钟分频
+    assign CLK_CPU = (sw_i[15]) ? clkdiv[27] : clkdiv[25];
+
+    // 寄存器文件相关信号
+    wire [31:0] RD1, RD2; // RF模块读取的数据
+    reg [31:0] reg_data;  // 当前显示的寄存器数据
+    reg [4:0] reg_addr;   // 循环显示的寄存器地址
+
+    wire RegWrite = sw_i[3]; // 控制写入信号，来自SW3
+    wire [4:0] A3 = sw_i[11:8]; // 写入寄存器地址，来自SW11-SW8
+    wire [31:0] WD = {27'b0, sw_i[7:4]}; // 写入数据，低4位来自SW7-SW4
+
+    // RF模块实例化
+    RF u_RF (
+        .clk(CLK_CPU),       // 时钟信号
+        .rstn(rstn),         // 复位信号
+        .RFWr(RegWrite),     // 写使能信号
+        .A1(reg_addr),       // 循环显示的地址
+        .A2(5'b0),           // 未使用的读取地址
+        .A3(A3),             // 写入寄存器地址
+        .WD(WD),             // 写入数据
+        .RD1(RD1),           // 读取寄存器数据
+        .RD2()               // 未使用的读取数据端口
+    );
+
+    // 循环显示 1-32 号寄存器内容
+    always @(posedge CLK_CPU or negedge rstn) begin
+        if (!rstn) begin
+            reg_addr <= 5'b1;      // 初始化为寄存器 1
+            reg_data <= 32'b0;    // 清空显示数据
+        end else if (sw_i[13] == 1'b1) begin
+            if (reg_addr == 5'b11111) // 如果到达32号寄存器，循环回到1号寄存器
+                reg_addr <= 5'b1;
+            else
+                reg_addr <= reg_addr + 1'b1; // 地址递增
+
+            reg_data <= RD1; // 显示当前寄存器的数据
+        end else begin
+            reg_data <= reg_data; // 保持当前数据
+        end
+    end
+
+    // 数码管显示模块
+    seg7x16 u_seg7x16 (
+        .clk(clk),
+        .rstn(rstn),
+        .i_data({32'b0, reg_data}), // 扩展为64位数据，方便数码管显示
+        .disp_mode(sw_i[0]),        // 控制显示模式
+        .o_seg(disp_seg_o),         // 数码管段选信号
+        .o_sel(disp_an_o)           // 数码管片选信号
+    );
+
+endmodule

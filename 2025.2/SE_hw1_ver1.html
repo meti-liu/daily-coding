@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>板块展示</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            display: flex;
+            justify-content: space-around;
+            background-color: #333;
+            padding: 20px;
+            color: white;
+            cursor: pointer;
+        }
+        .header div {
+            padding: 10px 20px;
+            text-align: center;
+        }
+        .header div:hover {
+            background-color: #575757;
+        }
+        .content {
+            padding: 20px;
+            text-align: center;
+        }
+        .content img {
+            max-width: 80%;
+            height: auto;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div onclick="changeContent(1)">板块1</div>
+        <div onclick="changeContent(2)">板块2</div>
+        <div onclick="changeContent(3)">板块3</div>
+        <div onclick="changeContent(4)">板块4</div>
+    </div>
+
+    <div class="content" id="content">
+        <h2>请选择一个板块</h2>
+        <p>点击上方的板块来查看不同的内容。</p>
+    </div>
+
+    <script>
+        function changeContent(boardNumber) {
+            var content = document.getElementById('content');
+            
+            switch(boardNumber) {
+                case 1:
+                    content.innerHTML = '<h2>这是板块1</h2><p>板块1的内容展示。</p><img src="图片1.jpg" alt="图片1">';
+                    break;
+                case 2:
+                    content.innerHTML = '<h2>这是板块2</h2><p>板块2的内容展示。</p><img src="图片2.jpg" alt="图片2">';
+                    break;
+                case 3:
+                    content.innerHTML = '<h2>这是板块3</h2><p>板块3的内容展示。</p><img src="图片3.jpg" alt="图片3">';
+                    break;
+                case 4:
+                    content.innerHTML = '<h2>这是板块4</h2><p>板块4的内容展示。</p><img src="图片4.jpg" alt="图片4">';
+                    break;
+                default:
+                    content.innerHTML = '<h2>请选择一个板块</h2><p>点击上方的板块来查看不同的内容。</p>';
+            }
+        }
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,93 @@
+`timescale 1ns / 1ps  
+module scpu_top(  
+    input clk,  
+    input rstn,  
+    input [15:0] sw_i,         // 输入开关  
+    output [7:0] disp_an_o,   
+    output [7:0] disp_seg_o    
+);  
+
+    // 时钟分频
+    reg [31:0] clkdiv;  
+    wire CLK_CPU;   
+
+    reg [4:0] reg_addr;       // 循环显示地址
+    reg [31:0] reg_data;      // 循环显示数据  
+
+    // ALU输入与输出信号
+    wire signed [31:0] A;     // ALU输入A  
+    wire signed [31:0] B;     // ALU输入B  
+    wire signed [31:0] C;     // ALU输出  
+    wire Zero;                // ALU零标志  
+
+    // 时钟分频逻辑
+    always @(posedge clk or negedge rstn) begin  
+        if (!rstn)  
+            clkdiv <= 0;  
+        else  
+            clkdiv <= clkdiv + 1;  
+    end  
+    assign CLK_CPU = (sw_i[15]) ? clkdiv[27] : clkdiv[25];  
+
+    // 实例化寄存器文件（RF）
+    wire [31:0] RD1, RD2;     // RF输出数据
+    wire RFWr = sw_i[3];      // 写使能信号
+    wire [31:0] WD;           // 写入数据
+    wire [4:0] A3 = sw_i[11:8]; // 写入寄存器地址
+
+    // 数据控制信号
+    assign WD = {{28{sw_i[7]}}, sw_i[7:4]}; // 写入数据，符号扩展
+
+    RF U_RF (  
+        .clk(CLK_CPU),  
+        .rstn(rstn),  
+        .RFWr(RFWr),  
+        .A1(sw_i[10:8]),  // 读取寄存器地址A1  
+        .A2(sw_i[6:4]),   // 读取寄存器地址A2  
+        .A3(A3),          // 写入寄存器地址A3  
+        .WD(WD),  
+        .RD1(RD1),  
+        .RD2(RD2)  
+    );  
+
+    // ALU输入和操作控制
+    assign A = RD1;                           // A口连接RF输出
+    assign B = RD2;                           // B口连接RF输出
+    wire [4:0] ALUOp = (sw_i[2]) ? 5'b00001 : 5'b00010; // 操作选择，加法/减法
+
+    // 实例化ALU模块
+    ALU U_ALU (  
+        .A(A),  
+        .B(B),  
+        .ALUOp(ALUOp),  
+        .C(C),  
+        .Zero(Zero)  
+    );  
+
+    // 循环显示 A、B、C、Zero 的内容
+    always @(posedge CLK_CPU or negedge rstn) begin  
+        if (!rstn) begin  
+            reg_addr <= 0;                   // 初始化显示地址
+            reg_data <= 32'b0;               // 初始化显示数据
+        end else if (sw_i[12] == 1'b1) begin // sw[12] 控制循环显示
+            case (reg_addr)  
+                0: reg_data <= A;            // 显示 A  
+                1: reg_data <= B;            // 显示 B  
+                2: reg_data <= C;            // 显示 C  
+                3: reg_data <= {31'b0, Zero}; // 显示 Zero  
+                default: reg_data <= 32'hFFFFFFFF; // 结束时显示FFFFFFFF  
+            endcase  
+            reg_addr <= (reg_addr == 3) ? 0 : reg_addr + 1; // 循环切换显示  
+        end  
+    end  
+
+    // 实例化数码管显示模块
+    seg7x16 u_seg7x16 (  
+        .clk(clk),  
+        .rstn(rstn),  
+        .i_data(reg_data),      // 显示当前数据  
+        .o_seg(disp_seg_o),   
+        .o_sel(disp_an_o)    
+    );  
+
+endmodule

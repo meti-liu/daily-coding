@@ -1,0 +1,2 @@
+﻿  1.cpp
+C:\Users\刘博瑞\OneDrive\桌面\code\vs\Offset\1.cpp(8,17): error C4996: 'getenv': This function or variable may be unsafe. Consider using _dupenv_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.

@@ -1,0 +1,13 @@
+{
+    "files.associations": {
+        "iostream": "cpp",
+        "stack": "cpp",
+        "deque": "cpp",
+        "xstring": "cpp",
+        "vector": "cpp",
+        "ostream": "cpp",
+        "xiosbase": "cpp",
+        "cmath": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "enabled"
+}

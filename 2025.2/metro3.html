@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>深圳地铁动态演示</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* 站点圆点样式 */
+    .station {
+      cursor: pointer;
+      transition: fill 0.3s ease;
+    }
+    .station:hover {
+      fill: yellow;
+    }
+    .selected {
+      fill: lime !important;
+    }
+    /* 站名样式 */
+    .station-name {
+      font-size: 14px;
+      font-family: Arial, sans-serif;
+      text-anchor: middle;
+      fill: black;
+      pointer-events: none;  /* 使得文字不影响交互 */
+    }
+  </style>
+</head>
+<body>
+  <svg id="metro-map" width="700" height="700" viewBox="0 0 700 700"></svg>
+  
+  <script>
+    // 地铁线路数据
+    const metroData = 
+    [
+      {
+        id: "line1",
+        color: "green",
+        path: "M100,350 L250,280 L400,320 L550,310 L650,350",
+        stations: [
+          { name: "宝安中心", x: 100, y: 350 },
+          { name: "大新", x: 250, y: 280 },
+          { name: "科学馆", x: 400, y: 320 },
+          { name: "国贸", x: 550, y: 310 },
+          { name: "罗湖", x: 650, y: 350 }
+        ]
+      },
+      {
+        id: "line2",
+        color: "red",
+        path: "M300,100 L290,250 L310,400 L300,550 L320,650",
+        stations: [
+          { name: "清湖", x: 300, y: 100 },
+          { name: "深圳北站", x: 290, y: 250 },
+          { name: "莲花北", x: 310, y: 400 },
+          { name: "会展中心", x: 300, y: 550 },
+          { name: "福田口岸", x: 320, y: 650 }
+        ]
+      },
+
+      {
+        id: "line3",
+        color: "blue",
+        path: "M550,400 L400,380 L200,400 L200,550 L220,650",
+        stations: [
+          { name: "老街", x: 550, y: 400 },
+          { name: "通新岭", x: 400, y: 380 },
+          { name: "少年宫", x: 200, y: 400 },
+          { name: "购物公园", x: 200, y: 550 },
+          { name: "福保", x: 220, y: 650 }
+        ]
+      }
+
+
+
+
+    ];
+  
+    const svg = d3.select("#metro-map");
+  
+    metroData.forEach((lineData, lineIndex) => {
+      // 绘制线路，并利用路径总长度实现动画
+      const linePath = svg.append("path")
+        .attr("d", lineData.path)
+        .attr("stroke", lineData.color)
+        .attr("stroke-width", 5)
+        .attr("fill", "none");
+      
+      // 动态计算路径总长度
+      const totalLength = linePath.node().getTotalLength();
+      linePath
+        .attr("stroke-dasharray", totalLength + " " + totalLength)
+        .attr("stroke-dashoffset", totalLength)
+        .transition()
+        .delay(lineIndex * 5000)  // 不同线路依次绘制
+        .duration(4000)
+        .ease(d3.easeLinear)
+        .attr("stroke-dashoffset", 0);
+      
+      // 为每个站点创建一个组（包含圆点和站名）
+      const stationGroup = svg.selectAll(".station-group-" + lineData.id)
+        .data(lineData.stations)
+        .enter()
+        .append("g")
+        .attr("class", "station-group")
+        .attr("transform", d => `translate(${d.x},${d.y})`);
+  
+      // 绘制站点圆点，初始半径为0，然后渐显
+      stationGroup.append("circle")
+        .attr("class", "station")
+        .attr("r", 0)
+        .attr("fill", "red")
+        .transition()
+        .delay((d, i) => lineIndex * 3000 + i * 500)
+        .duration(1000)
+        .attr("r", 6);
+  
+      // 绘制站点名称，初始透明，稍后显示
+      stationGroup.append("text")
+        .attr("class", "station-name")
+        .attr("x", 10)   // 相对于圆点的偏移，避免重叠
+        .attr("y", -10)
+        .text(d => d.name)
+        .attr("opacity", 0)
+        .transition()
+        .delay((d, i) => lineIndex * 3000 + i * 500 + 500)
+        .duration(500)
+        .attr("opacity", 1);
+  
+      // 添加点击事件：点击站点时切换“selected”状态
+      stationGroup.on("click", function(event, d) {
+        const circle = d3.select(this).select("circle");
+        const isSelected = circle.classed("selected");
+        circle.classed("selected", !isSelected);
+      });
+    });
+  </script>
+</body>
+</html>

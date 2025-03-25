@@ -1,0 +1,108 @@
+`timescale 1ns / 1ps
+
+module scpu_top(  
+    input clk,  
+    input rstn,  
+    input [15:0] sw_i,         // 输入开关  
+    output [7:0] disp_an_o,   
+    output [7:0] disp_seg_o    
+);  
+
+    // 时钟分频器
+    reg [31:0] clkdiv;  
+    wire CLK_CPU;   
+
+    // 时钟分频逻辑
+    always @(posedge clk or negedge rstn) begin
+        if (!rstn)
+            clkdiv <= 0;
+        else
+            clkdiv <= clkdiv + 1'b1;
+    end
+
+    // 根据开关 sw_i[15] 选择时钟分频
+    assign CLK_CPU = (sw_i[15]) ? clkdiv[27] : clkdiv[25];
+
+    // 寄存器文件相关信号
+    wire [31:0] RD1, RD2;                     // RF模块读取的数据
+    wire [4:0] A1 = {2'b0, sw_i[10:8]};      // 读取寄存器A1地址（扩展为5位）
+    wire [4:0] A2 = {2'b0, sw_i[7:5]};       // 读取寄存器A2地址（扩展为5位）
+    wire [4:0] A3 = {2'b0, sw_i[10:8]};      // 写入寄存器A3地址（扩展为5位）
+
+    // 写入数据的符号扩展（3位）
+    wire [31:0] WD = {{29{sw_i[7]}}, sw_i[7:5]}; // 符号扩展（3位）
+
+    // 写使能信号控制：sw_i[2]=1 且 sw_i[1]=0
+    wire RegWrite = sw_i[2] & ~sw_i[1];       
+
+    // 寄存器文件实例化
+    RF U_RF (  
+        .clk(CLK_CPU),       // 时钟信号
+        .rstn(rstn),         // 复位信号
+        .RFWr(RegWrite),     // 写使能信号
+        .A1(A1),             // 读取寄存器地址A1
+        .A2(A2),             // 读取寄存器地址A2
+        .A3(A3),             // 写入寄存器地址A3
+        .WD(WD),             // 写入数据
+        .RD1(RD1),           // 读取寄存器数据A1
+        .RD2(RD2)            // 读取寄存器数据A2
+    );
+
+    // ALU输入与输出信号
+    wire signed [31:0] A = RD1;      // ALU输入A，来自寄存器A1
+    wire signed [31:0] B = RD2;      // ALU输入B，来自寄存器A2
+    wire signed [31:0] C;            // ALU输出
+    wire Zero;                        // ALU零标志
+
+    // ALU操作控制，根据 sw_i[4:3] 设置 ALUOp（2位映射为5位）
+    wire [4:0] ALUOp;
+    assign ALUOp = (sw_i[4:3] == 2'b00) ? 5'b00001 : // 加法
+                   (sw_i[4:3] == 2'b01) ? 5'b00010 : // 减法
+                   5'b00000;                         // 默认
+
+    // ALU模块实例化
+    ALU u_alu(
+        .A(A),
+        .B(B),
+        .ALUOp(ALUOp),
+        .C(C),
+        .Zero(Zero)
+    );
+
+    // 循环显示A、B、C、Zero
+    reg [4:0] display_reg_addr;       // 循环显示地址
+    reg [31:0] display_reg_data;      // 当前显示的数据
+
+    always @(posedge CLK_CPU or negedge rstn) begin  
+        if (!rstn) begin  
+            display_reg_addr <= 1;             // 初始化寄存器地址为1
+            display_reg_data <= 32'b0;         // 初始化显示数据  
+        end else if (sw_i[12] == 1'b1) begin  
+            if (display_reg_addr == 4) 
+                display_reg_addr <= 1;           // 循环回到1号寄存器
+            else
+                display_reg_addr <= display_reg_addr + 1'b1; // 地址递增  
+
+            case (display_reg_addr)
+                1: display_reg_data <= A;               // 显示 A
+                2: display_reg_data <= B;               // 显示 B
+                3: display_reg_data <= C;               // 显示 C
+                4: display_reg_data <= {31'b0, Zero};  // 显示 Zero
+                default: display_reg_data <= 32'hFFFFFFFF; // 结束时显示FFFFFFFF
+            endcase
+        end else begin  
+            display_reg_data <= display_reg_data; // 保持当前显示数据  
+        end  
+    end  
+
+    // 数码管显示模块实例化
+    seg7x16 u_seg7x16 (
+        .clk(clk),                      // 主时钟
+        .rstn(rstn),                    // 复位信号
+        .i_data({32'b0, display_reg_data}), // 扩展为64位数据，方便数码管显示
+        .disp_mode(sw_i[0]),            // 控制显示模式（文本模式或图形模式）
+        .o_seg(disp_seg_o),             // 数码管段选信号
+        .o_sel(disp_an_o)               // 数码管片选信号
+    ); 
+
+endmodule

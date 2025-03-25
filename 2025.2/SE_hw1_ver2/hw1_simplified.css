@@ -1,0 +1,18 @@
+/* 为内容部分设置一些基础样式 */
+.content {
+    text-align: center;
+    padding: 20px;
+}
+
+/* 为所有图片设置一个统一的大小 */
+img {
+    width: 200px;
+    height: 200px;
+    margin-top: 20px; /* 给图片加一点上边距 */
+    cursor: pointer; /* 鼠标悬停时显示为点击样式 */
+}
+
+/* 鼠标悬停时的简单效果：放大图片 */
+img:hover {
+    transform: scale(1.1); /* 放大 */
+}

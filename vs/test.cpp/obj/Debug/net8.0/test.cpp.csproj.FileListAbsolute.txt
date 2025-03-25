@@ -1,0 +1,4 @@
+C:\Users\刘博瑞\OneDrive\桌面\code\vs\test.cpp\obj\Debug\net8.0\test.cpp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\刘博瑞\OneDrive\桌面\code\vs\test.cpp\obj\Debug\net8.0\test.cpp.AssemblyInfoInputs.cache
+C:\Users\刘博瑞\OneDrive\桌面\code\vs\test.cpp\obj\Debug\net8.0\test.cpp.AssemblyInfo.cs
+C:\Users\刘博瑞\OneDrive\桌面\code\vs\test.cpp\obj\Debug\net8.0\test.cpp.csproj.CoreCompileInputs.cache
