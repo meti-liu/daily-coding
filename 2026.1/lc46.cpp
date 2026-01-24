@@ -50,5 +50,4 @@ int main()
 {
     Solution solution;
     vector<int> nums={1,2,3};
-    cout<<solution.permute(nums);
 }

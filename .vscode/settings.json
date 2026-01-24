@@ -7,7 +7,9 @@
         "vector": "cpp",
         "ostream": "cpp",
         "xiosbase": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "format": "cpp",
+        "list": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled"
 }
