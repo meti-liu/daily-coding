@@ -1,0 +1,124 @@
+@startuml
+skinparam defaultTextAlignment center
+skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam ArrowColor #555
+skinparam NodeFontSize 12
+
+' 形状约定：圆=OR(状态)，菱形=AND(分解)，圆角矩形=原子动作
+skinparam class {
+  BackgroundColor White
+  BorderColor #333
+}
+' 自定义形状
+rectangle "Move(d1 A→B)" as m1AB #palegreen
+rectangle "Move(d1 B→C)" as m1BC #palegreen
+rectangle "Move(d1 C→A)" as m1CA #palegreen
+rectangle "Move(d1 A→B2)" as m1AB2 #palegreen
+rectangle "Move(d1 B→C2)" as m1BC2 #palegreen
+rectangle "Move(d1 A→B3)" as m1AB3 #palegreen
+rectangle "Move(d1 C→A2)" as m1CA2 #palegreen
+
+rectangle "Move(d2 A→C)" as m2AC #lightyellow
+rectangle "Move(d2 C→B)" as m2CB #lightyellow
+rectangle "Move(d2 B→A)" as m2BA #lightyellow
+rectangle "Move(d2 A→C2)" as m2AC2 #lightyellow
+rectangle "Move(d2 B→A2)" as m2BA2 #lightyellow
+
+rectangle "Move(d3 A→B)" as m3AB #wheat
+rectangle "Move(d3 B→C)" as m3BC #wheat
+
+rectangle "Move(d4 A→C)" as m4AC #lightblue
+
+' OR 节点（状态）
+() "aaaa" as s0
+() "bbba" as s1
+() "ccba" as s2
+() "ccba→(d1 B→C)=ccca" as s3
+() "bcc a" as s4
+() "ac c a" as s5
+() "ab b a" as s6
+() "bb b a" as s7
+() "bb b c" as s8
+() "cb b c" as s9
+() "ca b c" as s10
+() "aa b c" as s11
+() "aa c c" as s12
+() "ba c c" as s13
+() "bc c c" as s14
+() "cc c c" as goal
+
+' 为了简洁，状态名按四元组(p1,p2,p3,p4)写，
+' 上面几个中间状态已按最短解路径列出（与前面给你的15步一致）
+
+' AND 节点（任务分解）
+diamond "T(4, A→C | B)" as A4
+diamond "T(3, A→B | C)" as A3L
+diamond "T(3, B→C | A)" as A3R
+diamond "T(2, A→C | B)" as A2_1
+diamond "T(2, C→B | A)" as A2_2
+diamond "T(2, B→A | C)" as A2_3
+diamond "T(2, A→C | B)'" as A2_4
+
+' 连接：根状态 → 顶层任务（OR→AND）
+s0 --> A4
+
+' 顶层三段 AND：T3(A→B|C), Move d4, T3(B→C|A)
+A4 --> A3L
+A4 --> m4AC
+A4 --> A3R
+
+' ===== 左支：T(3, A→B | C) =====
+A3L --> A2_1
+A3L --> m3AB
+A3L --> A2_2
+
+' T(2, A→C | B)
+A2_1 --> m1AB      ' T(1, A→B | C)
+A2_1 --> m2AC
+A2_1 --> m1BC      ' T(1, B→C | A)
+
+' T(2, C→B | A)
+A2_2 --> m1CA      ' T(1, C→A | B)
+A2_2 --> m2CB
+A2_2 --> m1AB2     ' T(1, A→B | C)
+
+' ===== 右支：T(3, B→C | A) =====
+A3R --> A2_3
+A3R --> m3BC
+A3R --> A2_4
+
+' T(2, B→A | C)
+A2_3 --> m1BC2     ' T(1, B→C | A)
+A2_3 --> m2BA
+A2_3 --> m1CA2     ' T(1, C→A | B)
+
+' T(2, A→C | B)'
+A2_4 --> m1AB3     ' T(1, A→B | C)
+A2_4 --> m2AC2
+A2_4 --> m1BC2     ' 复用同动作名不影响理解
+
+' （可选）把关键状态路径连出来，强调最短轨迹从 aaaa 到 cccc
+s0 -[#888,dotted]-> s1
+s1 -[#888,dotted]-> s2
+s2 -[#888,dotted]-> s3
+s3 -[#888,dotted]-> s4
+s4 -[#888,dotted]-> s5
+s5 -[#888,dotted]-> s6
+s6 -[#888,dotted]-> s7
+s7 -[#888,dotted]-> s8
+s8 -[#888,dotted]-> s9
+s9 -[#888,dotted]-> s10
+s10 -[#888,dotted]-> s11
+s11 -[#888,dotted]-> s12
+s12 -[#888,dotted]-> s13
+s13 -[#888,dotted]-> s14
+s14 -[#888,dotted]-> goal
+
+legend right
+  圆形 = OR(状态，如 aaaa、cccc)
+  菱形 = AND(递归子任务 T(n,X→Y|Z) 的“三段分解”)
+  绿色/黄色/米色/蓝色 = 原子动作 Move(dk X→Y)
+  灰色虚线 = 一条最短状态路径（15步）
+endlegend
+@enduml
