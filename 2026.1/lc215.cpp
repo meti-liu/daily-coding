@@ -33,5 +33,6 @@ public:
             else if(pivotIndex<target) left=pivotIndex+1;
             else right=pivotIndex-1;
         }
+        return;
     }
 };
