@@ -17,7 +17,7 @@ public:
         }
 
         for(int i=1;i<=numRows;i++)
-        for(int j=1;j<=i;j++)
+        for(int j=1;j<=i-1;j++)
         {
             dp[i][j]=dp[i-1][j-1]+dp[i-1][j];
         }
