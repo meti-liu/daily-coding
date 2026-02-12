@@ -10,7 +10,7 @@ public:
     string combine;
     void dfs(string &digits, int idx, string &combine,vector<string>& result)
     {
-        if(idx==digits.length())
+        if(idx==digits.length())//combine.length is also OK
         {
             result.push_back(combine);
             return;
